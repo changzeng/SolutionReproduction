@@ -6,7 +6,7 @@ from sklearn.externals import joblib
 from sklearn.model_selection import train_test_split
 
 
-def train():
+def train(feature_file_name):
     params = {
         'task': 'train',
         'boosting_type': 'gbdt',
@@ -22,7 +22,7 @@ def train():
     }
 
     print("loading data...")
-    total_data = pd.read_csv("data/train_user_feature.csv")
+    total_data = pd.read_csv(feature_file_name)
     # total_data = pd.read_csv("data/test_train_user_feature.csv")
     total_data.drop(columns=["USRID"])
     print("split feature and label...")
@@ -37,8 +37,9 @@ def train():
     gbm = lgb.train(params, lgb_train, num_boost_round=100, valid_sets=lgb_eval,
                     early_stopping_rounds=5)
     joblib.dump(gbm, "gbm.pkl")
-    # lgb_predit = gbm.predict(fea_test, num_iteration=gbm.best_iteration)
+    # lgb_predict = gbm.predict(fea_test, num_iteration=gbm.best_iteration)
 
 
 if __name__ == "__main__":
-    train()
+    # train("data/train_user_feature.csv")
+    train("data/user_feature.csv")
