@@ -58,7 +58,7 @@ def transform_user_log_into_doc_pd():
 def transform_func(data):
     """
     transform func
-    :param data_list:
+    :param data:
     :return:
     """
     sep = 60
@@ -69,10 +69,12 @@ def transform_func(data):
     for ind, item in enumerate(data_list):
         if ind == 0:
             action_item = "start"
+            res_list.append(action_item)
         else:
-            time_interval = int((item[1] - data_list[ind-1][1])/sep)
-            action_item = "min_%d" % time_interval
-        res_list.append(action_item)
+            # time_interval = int((item[1] - data_list[ind-1][1])/sep)
+            # action_item = "min_%d" % time_interval
+            pass
+        # res_list.append(action_item)
         res_list.append(item[0])
     res_list.append("end")
     ret = "{0}\t{1}".format(uid, "\t".join(res_list))
@@ -100,14 +102,15 @@ def transform_user_log_into_doc_spark(file_name):
         .groupByKey() \
         .map(transform_func) \
         .collect()
-    with open("data/user_action_doc.txt", "w") as fd:
+    with open(file_name, "w") as fd:
         fd.write("\n".join(data))
 
 
-def train_word2vec(file_name):
+def train_word2vec(file_name, user_feature_file_name):
     """
     训练word2vec模型
     :param file_name:
+    :param user_feature_file_name:
     :return:
     """
     import gensim
@@ -120,8 +123,7 @@ def train_word2vec(file_name):
             uid, word_list = split_res[0], split_res[1:]
             uid_list.append(uid)
             text_list.append(word_list)
-    user_feature_name = "data/user_feature.csv"
-    if not os.path.exists(user_feature_name):
+    if not os.path.exists(user_feature_file_name):
         uid_to_vec = []
         if os.path.exists(model_name):
             model = gensim.models.Word2Vec.load(model_name)
@@ -144,13 +146,14 @@ def train_word2vec(file_name):
         data = pd.DataFrame(uid_to_vec, columns=name_list)
         label_data = pd.read_csv("data/train_flg.csv", sep="\t")
         data = pd.merge(data, label_data, on="USRID", how="left")
-        data.to_csv(user_feature_name)
+        data.to_csv(user_feature_file_name)
     else:
-        data = pd.read_csv(user_feature_name)
+        data = pd.read_csv(user_feature_file_name)
     return
 
 
 if __name__ == "__main__":
-    target_file_name = "data/user_action_doc.txt"
+    # target_file_name = "data/user_action_doc.txt"
+    target_file_name = "data/no_sep_user_action_doc.txt"
     transform_user_log_into_doc_spark(target_file_name)
-    train_word2vec(target_file_name)
+    train_word2vec(target_file_name, "data/no_sep_user_feature.csv")
